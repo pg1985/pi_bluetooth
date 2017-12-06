@@ -2,6 +2,7 @@ import bluetooth
 import sys
 import select
 import lights.lights as lights
+from thread import *
 
 from uuid import getnode as get_mac
 
@@ -14,10 +15,9 @@ connections = []
 hostMAC = sys.argv[1] # 0 is the name of the script 
 
 if hostMAC == None:
-	hostMAC = get_mac()
+    hostMAC = get_mac()
 
 backlog = 1
-size = 1024
 
 s = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 s.bind((hostMAC, bluetooth.PORT_ANY))
@@ -28,20 +28,25 @@ print(s.getsockname())
 
 #random uuid
 uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
-
+print("Waiting for connection on RFCOMM channel %d" % port)
 run = True
 
 #Makes this service discoverable after pairing, notwithstanding the RPi's configuration
 bluetooth.advertise_service( s, "SampleServer",uuid)
-print("Waiting for connection on RFCOMM channel %d" % port)
-try:
-    client, clientInfo = s.accept()
-    while run:
-        data = client.recv(size)
-        if data:
+
+def connect(conn):
+    while True:
+        connClient = conn[0]
+        data = connClient.recv(1024)
+        if not data:
+            break
+        else:
             lights.test_light(data.decode("utf-8"))
-            client.send(data) 
-except Exception as err:	
-    print("Closing socket: ", err)
-    client.close()
-    s.close()
+            connClient.send(data) 
+
+while 1:
+    client, clientInfo = s.accept()
+    print('New connection with: ' + addr[0] + ':' + str(addr[1]))
+
+    #New thread: First argument is the function name, 2nd is tuple of the arguments
+    start_new_thread(connect ,(conn,))
