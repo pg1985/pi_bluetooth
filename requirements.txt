@@ -1,0 +1,7 @@
+gevent==1.2.2
+greenlet==0.4.12
+ipaddress==1.0.17
+ipython==5.1.0
+ipython-genutils==0.1.0
+PyBluez==0.18
+RPi.GPIO==0.6.3
